@@ -1,5 +1,4 @@
 from typing import List
-import unidecode
 
 from nltk.stem.porter import PorterStemmer
 from nltk.tokenize import sent_tokenize, word_tokenize
