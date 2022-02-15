@@ -1,0 +1,6 @@
+(((( bob AND jill
+AND AND AND bob
+bob and jill)
+bob AND OR jill
+bob OR AND jill
+)bob AND jill(
