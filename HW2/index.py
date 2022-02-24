@@ -23,38 +23,36 @@ def build_index(in_dir, out_dict, out_postings):
     # Pls implement your code in below
 
     directory = in_dir
-    term_dictionary = [] # list to store the term_docid pairs
+    term_docid_list = [] # list to store the term_docid pairs
     posting_dictionary = dict()
+
+    p = Preprocessor()
+    mi = MemoryIndexing()
 
     # add all files in the directory for the indexing process
     for filename in listdir(directory):
         with open(filename,'r') as f:
             raw_data = [sentence.strip("\n") for sentence in f.readlines()]
-        
-        data = Preprocessor.preprocess_file(raw_data)
+
+        data = p.preprocess_file(raw_data)
         doc_id = int(filename.strip(".txt"))
-        dictionary = MemoryIndexing.create_dictionary(data,doc_id)
-        term_dictionary.extend(dictionary)
+        dictionary = mi.create_term_docid_pair(data,doc_id)
+        term_docid_list.extend(dictionary)
 
     # sort by term, then sort by termID
-    term_dictionary.sort(key=lambda x: x[0]).sort(key=lambda x: x[1])
+    term_docid_list.sort(key=lambda x: (x[0],x[1]))
 
-    posting_dictionary = MemoryIndexing.create_posting(term_dictionary)
-    term_dictionary.clear()
-
-    pointer_id = 0
-    for key,value in posting_dictionary:
-        term_dictionary.append((key,len(value),pointer_id))
-        pointer_id +=1 
+    terms = [term[0] for term in term_docid_list]
+    posting_dictionary = mi.create_posting(term_docid_list)
+    term_dictionary = mi.create_dictionary_trie(terms)
 
     with open(out_dict,'w',encoding='utf8') as f:
-        for elem in term_dictionary:
-            f.write(str(elem[0]) + " " + str(elem[1]) + " " + str(elem[2]) + '\n')
+        f.write(term_dictionary)
         f.close()
     
     with open(out_postings,'w',encoding='utf8') as f:
         for term,docid in posting_dictionary:
-            f.write(term + " " + " ".join(str) + '\n')
+            f.write(term + " " + " ".join(str(docid)) + '\n')
         f.close()
         
 
