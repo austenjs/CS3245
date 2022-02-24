@@ -47,7 +47,7 @@ def build_index(in_dir, out_dict, out_postings):
     term_dictionary = mi.create_dictionary_trie(terms)
 
     with open(out_dict,'w',encoding='utf8') as f:
-        f.write(term_dictionary)
+        f.write(str(term_dictionary))
         f.close()
     
     with open(out_postings,'w',encoding='utf8') as f:
