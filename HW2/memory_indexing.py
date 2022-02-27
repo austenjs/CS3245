@@ -1,4 +1,5 @@
 from typing import List,Tuple, Dict
+from math import sqrt
 
 class MemoryIndexing:
   '''
@@ -59,18 +60,20 @@ class MemoryIndexing:
     return root
 
 
-  def create_posting(self,termid_docid_pairs) -> Dict[int, List[int]]:
+  def create_posting(self,termid_docid_pairs) -> Dict[int, List[Tuple[int,int,int]]]:
     '''
     Take a list of term-docID pairs stored in a tuple and the index
     table that maps the terms to termIDs and returns a dictionary
     where the key is the term and the value is a list that contains 
-    the different docIDs that contains the term.
+    the different docIDs that contains the term, and skip pointers.
 
     Argument:
       term_docid_pairs  : list containing the term-docID pairs stored in a tuple.
 
     Return:
       Dictionary with term_list-of-docIDs key-value pairs. 
+
+    Note: If the current node does not have skip pointer, it will be labelled as (..., None, None)
     '''
     posting_dict = dict()
     exist_posting = set()
@@ -85,4 +88,44 @@ class MemoryIndexing:
         posting_dict[term_id].append(doc_id)
       exist_posting.add((term_id, doc_id))
 
-    return posting_dict
+    posting_skip_pointers = dict()
+    for term,postings in posting_dict.items():
+      skip_jump = int(sqrt(len(postings))) # to indicate the skip pointer
+      index = 0
+      length = len(postings)
+
+      for posting in postings:
+        if  index % skip_jump == 0 and index+skip_jump < length:
+          if term not in posting_skip_pointers.keys():
+            posting_skip_pointers[term] = [(posting,postings[index+skip_jump],index+skip_jump)]
+          else:
+            posting_skip_pointers[term].append((posting,postings[index+skip_jump],index+skip_jump))
+        else:
+          if term not in posting_skip_pointers.keys():
+            posting_skip_pointers[term] = [(posting,None,None)]
+          else:
+            posting_skip_pointers[term].append((posting,None,None))
+        index+=1
+
+      print(f"Finished creating posting for term {term}")
+
+    return posting_skip_pointers
+
+  def count_chars(self,posting_key,posting_value) -> int:
+    '''
+    Take the posting key and the list of postings and returns 
+    the total length when converting them into strings. This is 
+    to help the seeking portion in the searching portion. 
+
+    Argument:
+      posting_key: The posting's key (termID)
+      posting_value: the posting's list of docID tuples (with skip pointers)
+
+    Return:
+      Integer that represents the total length of the string
+    '''
+    key_length = len(str(posting_key))
+    posting_length = sum([len(str(elem)) + 1 for elem in posting_value]) # add 1 because of the added space
+    
+    return key_length + posting_length + 1 # add 1 because of the \n
+    

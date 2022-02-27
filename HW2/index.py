@@ -5,6 +5,7 @@ import os
 from posixpath import dirname
 import re
 import sys
+from math import sqrt
 
 import nltk
 
@@ -43,7 +44,6 @@ def build_index(in_dir, out_dict, out_postings):
     terms = [term[0] for term in term_docid_list]
     index_table = it.term_to_termID(terms)
     termid_docid_list = [(index_table[pair[0]],pair[1]) for pair in term_docid_list]
-    term_ids = [index_table[term] for term in terms]
 
     # sort by term, then sort by docID
     term_docid_list.sort(key=lambda x: (x[0], x[1]))
@@ -57,13 +57,41 @@ def build_index(in_dir, out_dict, out_postings):
     # create the dictionary of terms using the trie data structure
     term_dictionary = mi.create_dictionary_trie(terms,posting_dictionary,index_table)
 
+    # write the postings list to the disk
+    with open(out_postings,'w') as posting_file:
+        for term, postings in posting_dictionary.items():
+            posting_file.write(str(term))
+            for posting in postings:
+                posting_file.write(" " + str(posting))
+            posting_file.write("\n")
+    
+    # read the postings file again to help with the seek() function when searching
+    with open(out_postings,'r') as posting_file:
+        posting_data = posting_file.readlines()
+
+    line_offset = []
+    offset = 0
+    for line in posting_data:
+        line_offset.append(offset)
+        offset += len(line)
+
+    checked_terms = set()
+    for term in terms:
+        if term in checked_terms:
+            continue
+        term_id = index_table[term]
+        root = term[0]
+        current_node = term_dictionary[root]
+        for char in term[1:]:
+            current_node = current_node[char]
+        current_node["_end_"].append(line_offset[term_id - 1])
+        checked_terms.add(term)
+
+
+    # write the dictionary to the disk
     with open(out_dict, 'w') as dict_file:
         json.dump(term_dictionary, dict_file)
-    
-    with open(out_postings,'w') as posting_file:
-        json.dump(posting_dictionary, posting_file)
         
-
 input_directory = output_file_dictionary = output_file_postings = None
 
 try:
