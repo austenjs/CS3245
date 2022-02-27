@@ -50,6 +50,11 @@ def build_index(in_dir, out_dict, out_postings):
 
     # create the postings list and the dictionary terms
     posting_dictionary = mi.create_posting(termid_docid_list)
+    all_docid = list(map(int,os.listdir(directory)))
+    all_docid.sort()
+    posting_dictionary["_ALL_"] = all_docid.copy()
+
+    # create the dictionary of terms using the trie data structure
     term_dictionary = mi.create_dictionary_trie(terms,posting_dictionary,index_table)
 
     with open(out_dict, 'w') as dict_file:
