@@ -2,6 +2,7 @@ from typing import List
 
 from nltk.stem.porter import PorterStemmer
 from nltk.tokenize import sent_tokenize, word_tokenize
+from unidecode import unidecode
 
 class Preprocessor:
     '''
@@ -30,11 +31,11 @@ class Preprocessor:
         # Tokenize sentence
         sentences = sent_tokenize(file)
 
-        # Tokenize and store unique words
+        # Tokenize, normalize, and store unique words
         raw_words = set()
         for sentence in sentences:
             for word in word_tokenize(sentence):
-                raw_words.add(word)
+                raw_words.add(unidecode(word))
 
         # Lower case, stemming, and remove non-alphanumeric words
         processed_words = [self.stemmer.stem(word) for word in raw_words if word.isalnum()]
