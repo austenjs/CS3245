@@ -30,6 +30,7 @@ def build_index(in_dir, out_dict, out_postings):
 
     p = Preprocessor()
     mi = MemoryIndexing()
+    it = IndexTable()
 
     # add all files in the directory for the indexing process
     for filename in sorted(os.listdir(directory), key = lambda filename: int(filename)):
@@ -37,13 +38,19 @@ def build_index(in_dir, out_dict, out_postings):
         doc_id = int(filename)
         dictionary = mi.create_term_docid_pair(data,doc_id)
         term_docid_list.extend(dictionary)
-
-    # sort by term, then sort by termID
-    term_docid_list.sort(key=lambda x: (x[0], x[1]))
-
+    
+    # convert all the terms into term_id 
     terms = [term[0] for term in term_docid_list]
-    posting_dictionary = mi.create_posting(term_docid_list)
-    term_dictionary = mi.create_dictionary_trie(terms)
+    index_table = it.term_to_termID(terms)
+    termid_docid_list = [(index_table[pair[0]],pair[1]) for pair in term_docid_list]
+    term_ids = [index_table[term] for term in terms]
+
+    # sort by term (termID), then sort by docID
+    termid_docid_list.sort(key=lambda x: (x[0], x[1]))
+
+    # create the postings list and the dictionary terms
+    posting_dictionary = mi.create_posting(termid_docid_list)
+    term_dictionary = mi.create_dictionary_trie(term_ids,posting_dictionary)
 
     with open(out_dict, 'w') as dict_file:
         json.dump(term_dictionary, dict_file)

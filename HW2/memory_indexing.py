@@ -30,18 +30,21 @@ class MemoryIndexing:
     return term_docid_pairs
 
 
-  def create_dictionary_trie(self,list_of_terms) -> Dict[str, str]:
+  def create_dictionary_trie(self,list_of_terms,posting_dictionary) -> Dict[str, List[int,int]]:
     '''
-    Take a list of terms from a particular document and returns a 
+    Take a list of terms from a particular document, the
+    posting dictionary (to get the doc frequency), and the index
+    table to map the term to termIDs and returns a 
     dictionary that represents the trie-representation of the 
     words inside the list of terms. 
 
     Arguments:
       list_of_terms : list of terms from the particular document
+
     
     Return:
       Dictionary representing the trie-representation of the words
-      inside the document
+      inside the document.
     '''
     root = {}
 
@@ -49,16 +52,19 @@ class MemoryIndexing:
       current_node = root
       for char in term:
         current_node = current_node.setdefault(char,{})
-      current_node['_end_'] = term # if it founds the end marker, get the key pointer to the postings list
-
+      current_node['_end_'] = [term,len(posting_dictionary[term])] 
+    '''
+    if it founds the end marker, get the key pointer to the postings list and the document frequency
+    '''
     return root
 
 
-  def create_posting(self,term_docid_pairs) -> Dict[str, List[str]]:
+  def create_posting(self,termid_docid_pairs,) -> Dict[int, List[int]]:
     '''
-    Take a list of term-docID pairs stored in a tuple and returns 
-    a dictionary where the key is the term and the value is a list 
-    that contains the different docIDs that contains the term.
+    Take a list of term-docID pairs stored in a tuple and the index
+    table that maps the terms to termIDs and returns a dictionary
+    where the key is the term and the value is a list that contains 
+    the different docIDs that contains the term.
 
     Argument:
       term_docid_pairs  : list containing the term-docID pairs stored in a tuple.
@@ -69,14 +75,14 @@ class MemoryIndexing:
     posting_dict = dict()
     exist_posting = set()
 
-    for term, id in term_docid_pairs:
+    for term_id, doc_id in termid_docid_pairs:
       # Duplicate
-      if (term, id) in exist_posting:
+      if (term_id, doc_id) in exist_posting:
         continue
-      if term not in posting_dict.keys():
-        posting_dict[term] = [id]
+      if term_id not in posting_dict.keys():
+        posting_dict[term_id] = [doc_id]
       else:
-        posting_dict[term].append(id)
-      exist_posting.add((term, id))
+        posting_dict[term_id].append(doc_id)
+      exist_posting.add((term_id, doc_id))
 
     return posting_dict
