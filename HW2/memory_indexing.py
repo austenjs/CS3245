@@ -30,7 +30,7 @@ class MemoryIndexing:
     return term_docid_pairs
 
 
-  def create_dictionary_trie(self,list_of_terms) -> Dict[str:str]:
+  def create_dictionary_trie(self,list_of_terms) -> Dict[str, str]:
     '''
     Take a list of terms from a particular document and returns a 
     dictionary that represents the trie-representation of the 
@@ -54,7 +54,7 @@ class MemoryIndexing:
     return root
 
 
-  def create_posting(self,term_docid_pairs) -> Dict[str:List[str]]:
+  def create_posting(self,term_docid_pairs) -> Dict[str, List[str]]:
     '''
     Take a list of term-docID pairs stored in a tuple and returns 
     a dictionary where the key is the term and the value is a list 
@@ -67,11 +67,16 @@ class MemoryIndexing:
       Dictionary with term_list-of-docIDs key-value pairs. 
     '''
     posting_dict = dict()
+    exist_posting = set()
 
-    for term,id in term_docid_pairs:
+    for term, id in term_docid_pairs:
+      # Duplicate
+      if (term, id) in exist_posting:
+        continue
       if term not in posting_dict.keys():
-        posting_dict[term] = [str(id)]
+        posting_dict[term] = [id]
       else:
-        posting_dict[term].append(str(id))
+        posting_dict[term].append(id)
+      exist_posting.add((term, id))
 
     return posting_dict

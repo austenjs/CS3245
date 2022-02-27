@@ -10,7 +10,7 @@ class IndexTable:
   constructor in Python. 
   '''
 
-  def term_to_termID(self,list_of_terms) -> Dict[str:int]:
+  def term_to_termID(self,list_of_terms) -> Dict[str, int]:
     '''
     Take a list of terms and return a dictionary containing the 
     term-termID pair, where the term is the key and the termID
