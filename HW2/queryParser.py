@@ -1,11 +1,20 @@
 import re
 from typing import Generator, List
 
+from preprocessor import Preprocessor
+
 class QueryParser:
     '''
     Parser class that in charge of parsing the query into
     abstract syntax tree.
+
+    Attributes:
+    preprocessor (Preprocessor): A class that handle to preprocess
+    the tokens in the query
     '''
+
+    def __init__(self):
+        self.preprocessor = Preprocessor()
 
     def _tokenize(self, expression) -> Generator[str, None, None]:
         '''
@@ -18,7 +27,7 @@ class QueryParser:
         Return:
         A generator of tokens
         '''
-        return (re.findall("NOT [a-zA-Z0-9]+|[()]|[a-zA-Z0-9]+", expression))
+        return (re.findall("[()]|[a-zA-Z0-9]+", expression))
 
     def _is_operator(self, token) -> bool:
         '''
@@ -30,7 +39,7 @@ class QueryParser:
         Return:
         A boolean denoting whether the token is an operator or not.
         '''
-        return token == 'AND' or token == 'OR'
+        return token == 'AND' or token == 'OR' or token == 'NOT'
 
     def parse_queries(self, file_path) -> List[List[str]]:
         '''
@@ -54,27 +63,26 @@ class QueryParser:
         for sentence in sentences:
             valid_query = True
             num_of_unmatched_brackets = 0
-            is_previous_token = False
+            previous_token = ''
             for token in self._tokenize(sentence):
                 if self._is_operator(token):
-                    # Duplicate AND / OR
-                    if is_previous_token:
-                        valid_query = False
-                        break
-
                     # Push the operators in operator stack with higher precedence
                     if token == 'AND':
-                        while operator_stack and operator_stack[-1] == 'AND':
+                        if self._is_operator(previous_token):
+                            valid_query = False
+                            break
+                        while operator_stack and operator_stack[-1] in {'AND', 'NOT'}:
                             output_stack.append(operator_stack.pop())
                     elif token == 'OR':
+                        if self._is_operator(previous_token):
+                            valid_query = False
+                            break
                         while operator_stack and self._is_operator(operator_stack[-1]):
                             output_stack.append(operator_stack.pop())
                     operator_stack.append(token)
-                    is_previous_token = True
                 elif token == '(':
                     operator_stack.append(token)
                     num_of_unmatched_brackets += 1
-                    is_previous_token = False
                 elif token == ')':
                     # Empty Stack
                     if len(operator_stack) == 0:
@@ -91,10 +99,9 @@ class QueryParser:
                             valid_query = False
                             break
                     num_of_unmatched_brackets -= 1
-                    is_previous_token = False
                 else:
-                    output_stack.append(token)
-                    is_previous_token = False
+                    output_stack.append(self.preprocessor.stem(token))
+                previous_token = token
 
             # Invalid Query
             if not valid_query or num_of_unmatched_brackets > 0:

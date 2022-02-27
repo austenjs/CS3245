@@ -16,6 +16,18 @@ class Preprocessor:
     def __init__(self) -> None:
         self.stemmer = PorterStemmer()
 
+    def stem(self, word) -> str:
+        '''
+        Take a word, and then stem + turn it into a lower case word.
+
+        Argument:
+            word (str): A word
+
+        Return:
+            A lower-case word after being stemmed
+        '''
+        return self.stemmer.stem(word)
+
     def preprocess_file(self, file_path) -> List[str]:
         '''
         Take a file path and return the tokenized words for the document.

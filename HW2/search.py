@@ -1,8 +1,10 @@
 #!/usr/bin/python3
-import re
-import nltk
-import sys
 import getopt
+import json
+import sys
+
+from queryParser import QueryParser
+from queryEvaluator import QueryEvaluator
 
 def usage():
     print("usage: " + sys.argv[0] + " -d dictionary-file -p postings-file -q file-of-queries -o output-file-of-results")
@@ -13,8 +15,25 @@ def run_search(dict_file, postings_file, queries_file, results_file):
     perform searching on the given queries file and output the results to a file
     """
     print('running search on the queries...')
-    # This is an empty method
-    # Pls implement your code in below
+    # Create Parser and Evaluator
+    parser = QueryParser()
+    with open(dict_file, 'r') as f:
+        trie = json.load(f)
+    evaluator = QueryEvaluator(postings_file, trie)
+
+    # Parse queries
+    results = []
+    queries = parser.parse_queries(queries_file)
+    for query in queries:
+        results.append(evaluator.evaluate(query))
+
+    # Save result
+    with open(results_file, 'w') as f:
+        for result in results:
+            if result == []:
+                f.write("\n")
+            else:
+                f.write(" ".join(map(str, result)) + "\n")
 
 dictionary_file = postings_file = file_of_queries = output_file_of_results = None
 
