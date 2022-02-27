@@ -1,11 +1,13 @@
-
 #!/usr/bin/python3
-import re
-import nltk
-import sys
 import getopt
+import json
+import os
+from posixpath import dirname
+import re
+import sys
 
-from os import listdir
+import nltk
+
 from preprocessor import Preprocessor
 from index_table import IndexTable
 from memory_indexing import MemoryIndexing
@@ -30,30 +32,24 @@ def build_index(in_dir, out_dict, out_postings):
     mi = MemoryIndexing()
 
     # add all files in the directory for the indexing process
-    for filename in listdir(directory):
-        with open(filename,'r') as f:
-            raw_data = [sentence.strip("\n") for sentence in f.readlines()]
-
-        data = p.preprocess_file(raw_data)
-        doc_id = int(filename.strip(".txt"))
+    for filename in sorted(os.listdir(directory), key = lambda filename: int(filename)):
+        data = p.preprocess_file(os.path.join(directory, filename))
+        doc_id = int(filename)
         dictionary = mi.create_term_docid_pair(data,doc_id)
         term_docid_list.extend(dictionary)
 
     # sort by term, then sort by termID
-    term_docid_list.sort(key=lambda x: (x[0],x[1]))
+    term_docid_list.sort(key=lambda x: (x[0], x[1]))
 
     terms = [term[0] for term in term_docid_list]
     posting_dictionary = mi.create_posting(term_docid_list)
     term_dictionary = mi.create_dictionary_trie(terms)
 
-    with open(out_dict,'w',encoding='utf8') as f:
-        f.write(str(term_dictionary))
-        f.close()
+    with open(out_dict, 'w') as dict_file:
+        json.dump(term_dictionary, dict_file)
     
-    with open(out_postings,'w',encoding='utf8') as f:
-        for term,docid in posting_dictionary:
-            f.write(term + " " + " ".join(str(docid)) + '\n')
-        f.close()
+    with open(out_postings,'w') as posting_file:
+        json.dump(posting_dictionary, posting_file)
         
 
 input_directory = output_file_dictionary = output_file_postings = None
