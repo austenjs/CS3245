@@ -28,6 +28,6 @@ class IndexTable:
     for term in list_of_terms:
       if term not in term_termID_pair.keys():
         term_termID_pair[term] = id
-      id +=1 
+        id +=1 
     
     return term_termID_pair
