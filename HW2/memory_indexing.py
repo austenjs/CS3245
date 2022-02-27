@@ -30,7 +30,7 @@ class MemoryIndexing:
     return term_docid_pairs
 
 
-  def create_dictionary_trie(self,list_of_terms,posting_dictionary) -> Dict[str, List[int,int]]:
+  def create_dictionary_trie(self,list_of_terms,posting_dictionary,index_table) -> Dict[str, List[int]]:
     '''
     Take a list of terms from a particular document, the
     posting dictionary (to get the doc frequency), and the index
@@ -52,14 +52,14 @@ class MemoryIndexing:
       current_node = root
       for char in term:
         current_node = current_node.setdefault(char,{})
-      current_node['_end_'] = [term,len(posting_dictionary[term])] 
+      current_node['_end_'] = [index_table[term],len(posting_dictionary[index_table[term]])] 
     '''
     if it founds the end marker, get the key pointer to the postings list and the document frequency
     '''
     return root
 
 
-  def create_posting(self,termid_docid_pairs,) -> Dict[int, List[int]]:
+  def create_posting(self,termid_docid_pairs) -> Dict[int, List[int]]:
     '''
     Take a list of term-docID pairs stored in a tuple and the index
     table that maps the terms to termIDs and returns a dictionary

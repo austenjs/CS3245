@@ -45,12 +45,12 @@ def build_index(in_dir, out_dict, out_postings):
     termid_docid_list = [(index_table[pair[0]],pair[1]) for pair in term_docid_list]
     term_ids = [index_table[term] for term in terms]
 
-    # sort by term (termID), then sort by docID
-    termid_docid_list.sort(key=lambda x: (x[0], x[1]))
+    # sort by term, then sort by docID
+    term_docid_list.sort(key=lambda x: (x[0], x[1]))
 
     # create the postings list and the dictionary terms
     posting_dictionary = mi.create_posting(termid_docid_list)
-    term_dictionary = mi.create_dictionary_trie(term_ids,posting_dictionary)
+    term_dictionary = mi.create_dictionary_trie(terms,posting_dictionary,index_table)
 
     with open(out_dict, 'w') as dict_file:
         json.dump(term_dictionary, dict_file)
