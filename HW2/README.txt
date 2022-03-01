@@ -49,6 +49,7 @@ We created a queryEvaluator.py file to evaluate queries in search.py
 8. queryEvaluator.py
 9. dictionary.txt
 10. postings.txt
+11. README.txt
 
 == Statement of individual work ==
 
