@@ -39,12 +39,12 @@ def build_index(in_dir, out_dict, out_postings):
 
     # BSBI
     filenames = sorted(os.listdir(directory), key = lambda filename: int(filename))
-    num_of_blocks = 10
-    bsbi = BSBI(num_of_blocks, filenames)
+    num_of_files_in_one_block = 1000
+    bsbi = BSBI(num_of_files_in_one_block, filenames)
     chunks = bsbi.generate_chunks()
 
     term_docid_list = [] # list to store the term_docid pairs
-    for i in range(num_of_blocks):
+    for i in range(len(chunks)):
         chunk = chunks[i]
         print('Processing {} - {}'.format(chunk[0], chunk[-1]))
         for filename in chunk:

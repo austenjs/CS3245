@@ -6,12 +6,12 @@ class BSBI:
     A class that contains helper functions to implement BSBI.
 
     Attributes:
-    blocks (int): Number of blocks
+    num_of_files_in_one_block (int): Number of files in a block
     filenames (List[str]): Number of filenames
     '''
 
-    def __init__(self, blocks, filenames):
-        self.blocks = blocks
+    def __init__(self, num_of_files_in_one_block, filenames):
+        self.num_of_files_in_one_block = num_of_files_in_one_block
         self.filenames = filenames
 
     def generate_chunks(self) -> List[List[int]]:
@@ -22,10 +22,8 @@ class BSBI:
         A list of lists, where the i-th list denotes the i-th chunk.
         '''
         chunks = []
-        n = len(self.filenames) // self.blocks
-        for i in range(0, len(self.filenames), n):
-            chunks.append(self.filenames[i: i + n])
-        chunks[-2].extend(chunks.pop())
+        for i in range(0, len(self.filenames), self.num_of_files_in_one_block):
+            chunks.append(self.filenames[i: i + self.num_of_files_in_one_block])
         return chunks
 
     def merge(self, list_of_filenames, target_folder, target_level):
