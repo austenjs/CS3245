@@ -1,0 +1,16 @@
+(((( bob AND jill
+AND AND AND bob
+bob and jill)
+bob AND OR jill
+bob OR AND jill
+)bob AND jill(
+NOT OR NOT
+NOT AND NOT
+NOT jill AND NOT
+jill is NOT
+jill is AND author
+jill is a great man
+adam and jack
+and and and and and
+AND AND AND AND AND
+OR OR OR OR OR

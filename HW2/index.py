@@ -52,7 +52,7 @@ def build_index(in_dir, out_dict, out_postings):
     posting_dictionary = mi.create_posting(termid_docid_list)
     all_docid = list(map(int,os.listdir(directory)))
     all_docid.sort()
-    posting_dictionary["_ALL_"] = all_docid.copy()
+    posting_dictionary["_ALL_"] = tuple(map(lambda id: (id, None, None), all_docid))
 
     # create the dictionary of terms using the trie data structure
     term_dictionary = mi.create_dictionary_trie(terms,posting_dictionary,index_table)
@@ -62,7 +62,7 @@ def build_index(in_dir, out_dict, out_postings):
         for term, postings in posting_dictionary.items():
             posting_file.write(str(term))
             for posting in postings:
-                posting_file.write(" " + str(posting))
+                posting_file.write("|" + str(posting))
             posting_file.write("\n")
     
     # read the postings file again to help with the seek() function when searching
@@ -73,7 +73,7 @@ def build_index(in_dir, out_dict, out_postings):
     offset = 0
     for line in posting_data:
         line_offset.append(offset)
-        offset += len(line)
+        offset += len(line) + 1
 
     checked_terms = set()
     for term in terms:
@@ -86,6 +86,7 @@ def build_index(in_dir, out_dict, out_postings):
             current_node = current_node[char]
         current_node["_end_"].append(line_offset[term_id - 1])
         checked_terms.add(term)
+    term_dictionary['_ALL_'] = (None, len(checked_terms), line_offset[-1])
 
 
     # write the dictionary to the disk

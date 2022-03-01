@@ -107,8 +107,6 @@ class MemoryIndexing:
             posting_skip_pointers[term].append((posting,None,None))
         index+=1
 
-      print(f"Finished creating posting for term {term}")
-
     return posting_skip_pointers
 
   def count_chars(self,posting_key,posting_value) -> int:
