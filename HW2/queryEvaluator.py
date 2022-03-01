@@ -54,7 +54,10 @@ class QueryEvaluator:
             if letter not in current:
                 return []
             current = current[letter]
-        position = current['_end_'][2]
+        # Not leave
+        if '_end_' not in current:
+            return []
+        position = current['_end_'][1]
         self.posting_lists.seek(position, 0)
         lines = self.posting_lists.readline().split('|')
         relevant_lines = list(map(lambda clause: eval(clause.rstrip()), lines[1:]))
@@ -172,7 +175,7 @@ class QueryEvaluator:
         A list of integers that is the complement of the posting_list
         '''
         avoided_files = set(map(lambda x: x[0], posting_list))
-        all_position = self.trie['_ALL_'][2]
+        all_position = self.trie['_ALL_'][1]
         self.posting_lists.seek(all_position, 0)
         lines = self.posting_lists.readline().split('|')
         relevant_lines = list(map(lambda clause: eval(clause.rstrip()), lines[1:]))
