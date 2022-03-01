@@ -2,16 +2,13 @@
 import getopt
 import json
 import os
-from posixpath import dirname
-import re
+import shutil
 import sys
-from math import sqrt
 
-import nltk
-
-from preprocessor import Preprocessor
+from bsbi import BSBI
 from index_table import IndexTable
 from memory_indexing import MemoryIndexing
+from preprocessor import Preprocessor
 
 def usage():
     print("usage: " + sys.argv[0] + " -i directory-of-documents -d dictionary-file -p postings-file")
@@ -25,68 +22,111 @@ def build_index(in_dir, out_dict, out_postings):
     # This is an empty method
     # Pls implement your code in below
 
-    directory = in_dir
-    term_docid_list = [] # list to store the term_docid pairs
-    posting_dictionary = dict()
+    ROOT_DIRECTORY = os.path.dirname(os.path.abspath(__file__))
+    directory = os.path.join(ROOT_DIRECTORY, in_dir)
+    temp_folder = os.path.join(ROOT_DIRECTORY, 'disks')
+
+    # Check if folder exists
+    if not os.path.exists(temp_folder):
+        os.mkdir(temp_folder)
+    else:
+        shutil.rmtree(temp_folder)
+        os.mkdir(temp_folder)
 
     p = Preprocessor()
     mi = MemoryIndexing()
     it = IndexTable()
 
-    # add all files in the directory for the indexing process
-    for filename in sorted(os.listdir(directory), key = lambda filename: int(filename)):
-        data = p.preprocess_file(os.path.join(directory, filename))
-        doc_id = int(filename)
-        dictionary = mi.create_term_docid_pair(data,doc_id)
-        term_docid_list.extend(dictionary)
+    # BSBI
+    filenames = sorted(os.listdir(directory), key = lambda filename: int(filename))
+    num_of_files_in_one_block = 1000
+    bsbi = BSBI(num_of_files_in_one_block, filenames)
+    chunks = bsbi.generate_chunks()
+
+    term_docid_list = [] # list to store the term_docid pairs
+    for i in range(len(chunks)):
+        chunk = chunks[i]
+        for filename in chunk:
+            data = p.preprocess_file(os.path.join(directory, filename))
+            doc_id = int(filename)
+            dictionary = mi.create_term_docid_pair(data, doc_id)
+            term_docid_list.extend(dictionary)
+
+        # convert all the terms into term_id 
+        terms = list(set(map(lambda pair: pair[0], term_docid_list)))
+        index_table = it.term_to_termID(terms)
+        termid_docid_list = [(index_table[pair[0]], pair[1]) for pair in term_docid_list]
+
+        # create the postings list and the dictionary terms
+        posting_dictionary = mi.create_posting(termid_docid_list)
+
+        # write the postings list to the disk
+        target_name = os.path.join(temp_folder, 'level0_chuck_{}.txt'.format(i))
+        with open(target_name,'w') as posting_file:
+            for term in sorted(terms, key = lambda t: index_table[t]):
+                term_id = index_table[term]
+                posting_file.write(str(term_id))
+                for posting in posting_dictionary[term_id]:
+                    posting_file.write("|" + str(posting))
+                posting_file.write("\n")
+
+        # Clear for next chunk
+        term_docid_list.clear()
+
+    ## Merging
+    level = 1
+    filenames_in_disks = os.listdir(temp_folder)
+    while len(filenames_in_disks) > 1:
+        bsbi.merge(filenames_in_disks, temp_folder, level)
+        filenames_in_disks = os.listdir(temp_folder)
+        level += 1
+
+    # Write the _ALL_ for NOT operation in Search
+    with open(os.path.join(temp_folder, filenames_in_disks[0]), 'a') as posting_file:
+        posting_file.write("_ALL_")
+        for filename in filenames:
+            posting_file.write("|" + filename)
+
+    # Create skip pointer and write it on the output file
+    with open(os.path.join(ROOT_DIRECTORY, out_postings), 'w') as posting_file:
+        with open(os.path.join(temp_folder, filenames_in_disks[0]), 'r') as bsbi_result:
+            line = bsbi_result.readline().rstrip()
+            while line != '' and line != '\n':
+                termId, *postings = line.split('|')
+                posting_with_skip = mi.create_skip_pointers(list(map(int, postings)))
+                posting_file.write(termId)
+                for posting in posting_with_skip:
+                    posting_file.write("|" + str(posting))
+                posting_file.write("\n")
+                line = bsbi_result.readline()
     
-    # convert all the terms into term_id 
-    terms = [term[0] for term in term_docid_list]
-    index_table = it.term_to_termID(terms)
-    termid_docid_list = [(index_table[pair[0]],pair[1]) for pair in term_docid_list]
-
-    # sort by term, then sort by docID
-    term_docid_list.sort(key=lambda x: (x[0], x[1]))
-
-    # create the postings list and the dictionary terms
-    posting_dictionary = mi.create_posting(termid_docid_list)
-    all_docid = list(map(int,os.listdir(directory)))
-    all_docid.sort()
-    posting_dictionary["_ALL_"] = tuple(map(lambda id: (id, None, None), all_docid))
-
-    # create the dictionary of terms using the trie data structure
-    term_dictionary = mi.create_dictionary_trie(terms,posting_dictionary,index_table)
-
-    # write the postings list to the disk
-    with open(out_postings,'w') as posting_file:
-        for term, postings in posting_dictionary.items():
-            posting_file.write(str(term))
-            for posting in postings:
-                posting_file.write("|" + str(posting))
-            posting_file.write("\n")
+    # Delete BSBI chunk
+    os.remove(os.path.join(temp_folder, filenames_in_disks[0]))
     
     # read the postings file again to help with the seek() function when searching
-    with open(out_postings,'r') as posting_file:
-        posting_data = posting_file.readlines()
-
     line_offset = []
+    frequencies = []
     offset = 0
-    for line in posting_data:
-        line_offset.append(offset)
-        offset += len(line) + 1
+    with open(os.path.join(ROOT_DIRECTORY, out_postings), 'r') as posting_file:
+        line = posting_file.readline()
+        while line != '' and line != '\n':
+            line_offset.append(offset)
+            frequencies.append(len(line.split('|')) - 1)
+            offset += len(line) + 1
+            line = posting_file.readline()
 
-    checked_terms = set()
+    # create the dictionary of terms using the trie data structure
+    terms = it.get_term_termID_dict().keys()
+    term_dictionary = mi.create_dictionary_trie(terms, frequencies, index_table)
+
     for term in terms:
-        if term in checked_terms:
-            continue
         term_id = index_table[term]
         root = term[0]
         current_node = term_dictionary[root]
         for char in term[1:]:
             current_node = current_node[char]
         current_node["_end_"].append(line_offset[term_id - 1])
-        checked_terms.add(term)
-    term_dictionary['_ALL_'] = (None, len(checked_terms), line_offset[-1])
+    term_dictionary['_ALL_'] = (None, line_offset[-1])
 
 
     # write the dictionary to the disk

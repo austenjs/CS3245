@@ -31,7 +31,7 @@ class MemoryIndexing:
     return term_docid_pairs
 
 
-  def create_dictionary_trie(self,list_of_terms,posting_dictionary,index_table) -> Dict[str, List[int]]:
+  def create_dictionary_trie(self, list_of_terms, frequency, index_table) -> Dict[str, List[int]]:
     '''
     Take a list of terms from a particular document, the
     posting dictionary (to get the doc frequency), and the index
@@ -53,19 +53,16 @@ class MemoryIndexing:
       current_node = root
       for char in term:
         current_node = current_node.setdefault(char,{})
-      current_node['_end_'] = [index_table[term],len(posting_dictionary[index_table[term]])] 
-    '''
-    if it founds the end marker, get the key pointer to the postings list and the document frequency
-    '''
+      identifier = index_table[term]
+      current_node['_end_'] = [frequency[identifier - 1]]
     return root
 
 
-  def create_posting(self,termid_docid_pairs) -> Dict[int, List[Tuple[int,int,int]]]:
+  def create_posting(self,termid_docid_pairs) -> Dict[int, List[int]]:
     '''
     Take a list of term-docID pairs stored in a tuple and the index
     table that maps the terms to termIDs and returns a dictionary
-    where the key is the term and the value is a list that contains 
-    the different docIDs that contains the term, and skip pointers.
+    where the key is the termId and the value is a list of docIDs.
 
     Argument:
       term_docid_pairs  : list containing the term-docID pairs stored in a tuple.
@@ -88,25 +85,32 @@ class MemoryIndexing:
         posting_dict[term_id].append(doc_id)
       exist_posting.add((term_id, doc_id))
 
-    posting_skip_pointers = dict()
-    for term,postings in posting_dict.items():
-      skip_jump = int(sqrt(len(postings))) # to indicate the skip pointer
-      index = 0
-      length = len(postings)
+    return posting_dict
 
-      for posting in postings:
-        if  index % skip_jump == 0 and index+skip_jump < length:
-          if term not in posting_skip_pointers.keys():
-            posting_skip_pointers[term] = [(posting,postings[index+skip_jump],index+skip_jump)]
-          else:
-            posting_skip_pointers[term].append((posting,postings[index+skip_jump],index+skip_jump))
-        else:
-          if term not in posting_skip_pointers.keys():
-            posting_skip_pointers[term] = [(posting,None,None)]
-          else:
-            posting_skip_pointers[term].append((posting,None,None))
-        index+=1
+  def create_skip_pointers(self, posting_list) -> List[Tuple[int, int, int]]:
+    '''
+    A function that convert the posting list from a list of int into a list of tuple.
 
+    Note: If the current node does not have skip pointer, it will be labelled as (..., None, None)
+    Otherwise, it will be labeled as (..., ..., ...)
+
+    Argument:
+      posting_list (List[int])  : A posting list.
+
+    Return:
+      Dictionary with term_list-of-docIDs key-value pairs. 
+    '''
+    posting_skip_pointers = []
+    skip_jump = int(sqrt(len(posting_list))) # to indicate the skip pointer
+    index = 0
+    length = len(posting_list)
+
+    for posting in posting_list:
+      if  index % skip_jump == 0 and index+skip_jump < length:
+        posting_skip_pointers.append((posting, posting_list[index+skip_jump],index+skip_jump))
+      else:
+        posting_skip_pointers.append((posting,None,None))
+      index+=1
     return posting_skip_pointers
 
   def count_chars(self,posting_key,posting_value) -> int:
