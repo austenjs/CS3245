@@ -46,7 +46,6 @@ def build_index(in_dir, out_dict, out_postings):
     term_docid_list = [] # list to store the term_docid pairs
     for i in range(len(chunks)):
         chunk = chunks[i]
-        print('Processing {} - {}'.format(chunk[0], chunk[-1]))
         for filename in chunk:
             data = p.preprocess_file(os.path.join(directory, filename))
             doc_id = int(filename)

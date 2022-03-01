@@ -102,5 +102,3 @@ class BSBI:
             file1.close()
             os.remove(os.path.join(target_folder, filename0))
             os.remove(os.path.join(target_folder, filename1))
-            print('Merged {} and {} into {}'.format(filename0, filename1, target_name))
-
