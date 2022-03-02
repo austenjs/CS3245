@@ -16,9 +16,10 @@ class Preprocessor:
     def __init__(self) -> None:
         self.stemmer = PorterStemmer()
 
-    def stem(self, word) -> str:
+    def preprocess_word(self, word) -> str:
         '''
-        Take a word, and then stem + turn it into a lower case word.
+        Take a word, normalize, stem, and turn the word
+        into a lower case word.
 
         Argument:
             word (str): A word
@@ -26,7 +27,7 @@ class Preprocessor:
         Return:
             A lower-case word after being stemmed
         '''
-        return self.stemmer.stem(word)
+        return self.stemmer.stem(unidecode(word))
 
     def preprocess_file(self, file_path) -> List[str]:
         '''
