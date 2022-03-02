@@ -50,6 +50,6 @@ class Preprocessor:
                 raw_words.add(unidecode(word))
 
         # Lower case, stemming, and remove non-alphanumeric words
-        processed_words = [self.stemmer.stem(word) for word in raw_words if word.isalnum()]
+        processed_words = [self.stemmer.stem(word) for word in raw_words]
 
         return processed_words
