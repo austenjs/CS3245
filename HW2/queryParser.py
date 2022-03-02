@@ -100,7 +100,7 @@ class QueryParser:
                             break
                     num_of_unmatched_brackets -= 1
                 else:
-                    output_stack.append(self.preprocessor.stem(token))
+                    output_stack.append(self.preprocessor.preprocess_word(token))
                 previous_token = token
 
             # Invalid Query
