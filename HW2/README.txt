@@ -70,3 +70,4 @@ We suggest that we should be graded as follows: -
 
 <Please list any websites and/or people you consulted with for this
 assignment and state their role>
+1. https://en.wikipedia.org/wiki/Shunting-yard_algorithm - For queryParser
