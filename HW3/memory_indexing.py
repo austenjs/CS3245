@@ -31,11 +31,10 @@ class MemoryIndexing:
     return term_docid_pairs
 
 
-  def create_dictionary_trie(self, list_of_terms, frequency, index_table) -> Dict[str, List[int]]:
+  def create_dictionary_trie(self, list_of_terms, frequency) -> Dict[str, List[int]]:
     '''
     Take a list of terms from a particular document, the
-    posting dictionary (to get the doc frequency), and the index
-    table to map the term to termIDs and returns a 
+    posting dictionary (to get the doc frequency)  and returns a 
     dictionary that represents the trie-representation of the 
     words inside the list of terms. 
 
@@ -53,81 +52,42 @@ class MemoryIndexing:
       current_node = root
       for char in term:
         current_node = current_node.setdefault(char,{})
-      identifier = index_table[term]
-      current_node['_end_'] = [frequency[identifier - 1]]
+      current_node['_end_'] = [frequency[term]]
     return root
 
 
-  def create_posting(self,termid_docid_pairs) -> Dict[int, List[int]]:
+  def create_posting(self,term_docid_pairs,document_length) -> Dict[str, List[Tuple[int,int]]]:
     '''
-    Take a list of term-docID pairs stored in a tuple and the index
-    table that maps the terms to termIDs and returns a dictionary
-    where the key is the termId and the value is a list of docIDs.
+    Take a list of term-docID pairs stored in a tuple and returns 
+    a dictionary where the key is the term and the value is a list of 
+    tuples containing DocID,term frequencies, and document length. 
 
     Argument:
       term_docid_pairs  : list containing the term-docID pairs stored in a tuple.
 
     Return:
-      Dictionary with term_list-of-docIDs key-value pairs. 
+      Dictionary with term_list-of-docID-term_frequency key-value pairs. 
 
     Note: If the current node does not have skip pointer, it will be labelled as (..., None, None)
     '''
     posting_dict = dict()
     exist_posting = set()
 
-    for term_id, doc_id in termid_docid_pairs:
+    for term, doc_id in term_docid_pairs:
       # Duplicate
-      if (term_id, doc_id) in exist_posting:
+      if (term, doc_id) in exist_posting:
+        posting_dict[term][doc_id] +=1
         continue
-      if term_id not in posting_dict.keys():
-        posting_dict[term_id] = [doc_id]
+      if term not in posting_dict.keys():
+        posting_dict[term] = dict()
+        posting_dict[term][doc_id] = 1 
       else:
-        posting_dict[term_id].append(doc_id)
-      exist_posting.add((term_id, doc_id))
+        posting_dict[term][doc_id] = 1
+      exist_posting.add((term, doc_id))
 
-    return posting_dict
+    # Turn them into list of tuples
+    posting_dict_term_freq = dict()
+    for term in posting_dict.keys():
+      posting_dict_term_freq[term] = [(doc_id,term_freq,document_length[doc_id]) for doc_id,term_freq in posting_dict[term].items()]
 
-  def create_skip_pointers(self, posting_list) -> List[Tuple[int, int, int]]:
-    '''
-    A function that convert the posting list from a list of int into a list of tuple.
-
-    Note: If the current node does not have skip pointer, it will be labelled as (..., None, None)
-    Otherwise, it will be labeled as (..., ..., ...)
-
-    Argument:
-      posting_list (List[int])  : A posting list.
-
-    Return:
-      Dictionary with term_list-of-docIDs key-value pairs. 
-    '''
-    posting_skip_pointers = []
-    skip_jump = int(sqrt(len(posting_list))) # to indicate the skip pointer
-    index = 0
-    length = len(posting_list)
-
-    for posting in posting_list:
-      if  index % skip_jump == 0 and index+skip_jump < length:
-        posting_skip_pointers.append((posting, posting_list[index+skip_jump],index+skip_jump))
-      else:
-        posting_skip_pointers.append((posting,None,None))
-      index+=1
-    return posting_skip_pointers
-
-  def count_chars(self,posting_key,posting_value) -> int:
-    '''
-    Take the posting key and the list of postings and returns 
-    the total length when converting them into strings. This is 
-    to help the seeking portion in the searching portion. 
-
-    Argument:
-      posting_key: The posting's key (termID)
-      posting_value: the posting's list of docID tuples (with skip pointers)
-
-    Return:
-      Integer that represents the total length of the string
-    '''
-    key_length = len(str(posting_key))
-    posting_length = sum([len(str(elem)) + 1 for elem in posting_value]) # add 1 because of the added space
-    
-    return key_length + posting_length + 1 # add 1 because of the \n
-    
+    return posting_dict_term_freq

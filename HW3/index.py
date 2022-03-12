@@ -4,6 +4,12 @@ import nltk
 import sys
 import getopt
 
+import os
+import json
+
+from preprocessor import Preprocessor
+from memory_indexing import MemoryIndexing
+
 def usage():
     print("usage: " + sys.argv[0] + " -i directory-of-documents -d dictionary-file -p postings-file")
 
@@ -15,6 +21,63 @@ def build_index(in_dir, out_dict, out_postings):
     print('indexing...')
     # This is an empty method
     # Pls implement your code in below
+
+    ROOT_DIRECTORY = os.path.dirname(os.path.abspath(__file__))
+
+    p = Preprocessor()
+    mi = MemoryIndexing()
+    
+    filenames = sorted(os.listdir(in_dir), key = lambda filename: int(filename))
+
+    # Generate the term_docid_pairs 
+    term_docid_pairs = []
+    document_length = dict()
+    for filename in filenames:
+        terms = p.preprocess_file(os.path.join(in_dir,filename))
+        doc_id = int(filename)
+        document_length[doc_id] = len(terms)
+        term_docid_pair = mi.create_term_docid_pair(terms,doc_id)
+        term_docid_pairs.extend(term_docid_pair)
+    
+    # Create the postings list
+    postings_list = mi.create_posting(term_docid_pairs,document_length)
+
+    # Write the postings list to the postings file
+    with open(os.path.join(ROOT_DIRECTORY,out_postings), 'w') as postings_file:
+        for term, postings in postings_list.items():
+            postings_file.write(term)
+            for elem in postings:
+                postings_file.write('|' + str(elem))
+            postings_file.write('\n')
+    
+    # Read the postings file again to help with the seek() function when searching
+    terms = []
+    frequencies = dict()
+    line_offset = dict()
+    offset = 0
+
+    with open(os.path.join(ROOT_DIRECTORY, out_postings), 'r') as posting_file:
+        line = posting_file.readline()
+        while line != '' and line != '\n':
+            term = line.split('|')[0]
+            terms.append(term)
+            line_offset[term] = offset
+            frequencies[term] = (len(line.split('|')) - 1)
+            offset += len(line) + 1
+            line = posting_file.readline() 
+
+    term_dictionary = mi.create_dictionary_trie(terms,frequencies)
+
+    for term in terms:
+        root = term[0]
+        current_node = term_dictionary[root]
+        for char in term[1:]:
+            current_node = current_node[char]
+        current_node["_end_"].append(line_offset[term])
+
+    # Write the dictionary to the disk
+    with open(out_dict, 'w') as dict_file:
+        json.dump(term_dictionary, dict_file)
 
 input_directory = output_file_dictionary = output_file_postings = None
 
