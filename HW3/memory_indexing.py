@@ -1,5 +1,5 @@
 from typing import List,Tuple, Dict
-from math import sqrt
+from math import sqrt,log10
 
 class MemoryIndexing:
   '''
@@ -62,13 +62,14 @@ class MemoryIndexing:
     a dictionary where the key is the term and the value is a list of 
     tuples containing DocID,term frequencies, and document length. 
 
+    The calculations for the lnc. document terms are done here
+
     Argument:
       term_docid_pairs  : list containing the term-docID pairs stored in a tuple.
 
     Return:
       Dictionary with term_list-of-docID-term_frequency key-value pairs. 
 
-    Note: If the current node does not have skip pointer, it will be labelled as (..., None, None)
     '''
     posting_dict = dict()
     exist_posting = set()
@@ -85,9 +86,38 @@ class MemoryIndexing:
         posting_dict[term][doc_id] = 1
       exist_posting.add((term, doc_id))
 
-    # Turn them into list of tuples
-    posting_dict_term_freq = dict()
-    for term in posting_dict.keys():
-      posting_dict_term_freq[term] = [(doc_id,term_freq,document_length[doc_id]) for doc_id,term_freq in posting_dict[term].items()]
 
-    return posting_dict_term_freq
+    # Logarithmic computation of the term frequencies 
+    for term in posting_dict.keys():
+      for doc_id in posting_dict[term].keys():
+        posting_dict[term][doc_id] = 1 + log10(posting_dict[term][doc_id])
+
+    # Normalize with respect to the length of the vectors
+    doc_vector_length = dict()
+    for term in posting_dict.keys():
+      for doc_id in posting_dict[term].keys():
+        
+        # add the logarithmic values to the doc_vector_length dictionaries and square the terms for normalization
+        if doc_id not in doc_vector_length.keys():
+          doc_vector_length[doc_id] = [posting_dict[term][doc_id]**2] # preemptively square the terms
+        else:
+          doc_vector_length[doc_id].append(posting_dict[term][doc_id]**2) # preemptively square the terms
+
+    # Calculate the length of the vectors
+    for doc_id in doc_vector_length.keys():
+      doc_vector_length[doc_id] = sqrt(sum(doc_vector_length[doc_id]))
+
+    # Turn the postings into a list of tuples, with normalization applied during the process
+    posting_dict_result = dict()
+    for term in posting_dict.keys():
+
+      posting_dict_term_freq = []
+      for doc_id,term_freq in posting_dict[term].items():
+        posting_dict_term_freq.append((doc_id,round(term_freq/doc_vector_length[doc_id],3)))
+
+      posting_dict_result[term] = posting_dict_term_freq
+
+    # Adding the list of the document lengths, with the key _LENGTH_
+    posting_dict_result["_LENGTH_"] = [(doc_id,length) for doc_id,length in document_length.items()]
+
+    return posting_dict_result

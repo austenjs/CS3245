@@ -44,11 +44,11 @@ class Preprocessor:
         # Tokenize sentence
         sentences = sent_tokenize(file)
 
-        # Tokenize, normalize, and store unique words
-        raw_words = set()
+        # Tokenize, normalize, and store all the words
+        raw_words = []
         for sentence in sentences:
             for word in word_tokenize(sentence):
-                raw_words.add(unidecode(word))
+                raw_words.append(unidecode(word))
 
         # Lower case, stemming, and remove non-alphanumeric words
         processed_words = [self.stemmer.stem(word) for word in raw_words]

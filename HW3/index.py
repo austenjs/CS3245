@@ -39,7 +39,7 @@ def build_index(in_dir, out_dict, out_postings):
         term_docid_pair = mi.create_term_docid_pair(terms,doc_id)
         term_docid_pairs.extend(term_docid_pair)
     
-    # Create the postings list
+    # Create the postings list, with tf normalization applied
     postings_list = mi.create_posting(term_docid_pairs,document_length)
 
     # Write the postings list to the postings file
@@ -74,6 +74,9 @@ def build_index(in_dir, out_dict, out_postings):
         for char in term[1:]:
             current_node = current_node[char]
         current_node["_end_"].append(line_offset[term])
+    
+    # Set the dictionary for the _LENGTH_ term 
+    term_dictionary['_LENGTH_'] = line_offset["_LENGTH_"]
 
     # Write the dictionary to the disk
     with open(out_dict, 'w') as dict_file:
