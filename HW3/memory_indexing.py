@@ -113,7 +113,9 @@ class MemoryIndexing:
 
       posting_dict_term_freq = []
       for doc_id,term_freq in posting_dict[term].items():
-        posting_dict_term_freq.append((doc_id,round(term_freq/doc_vector_length[doc_id],3)))
+        posting_dict_term_freq.append((doc_id,round(term_freq/doc_vector_length[doc_id],10)))
+
+      posting_dict_term_freq.sort(key=lambda pair: pair[1], reverse= True)
 
       posting_dict_result[term] = posting_dict_term_freq
 
