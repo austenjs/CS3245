@@ -1,5 +1,5 @@
-from typing import List,Tuple, Dict
-from math import sqrt,log10
+from typing import List, Tuple, Dict
+from math import sqrt, log10
 
 class MemoryIndexing:
   '''

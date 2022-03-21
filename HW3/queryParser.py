@@ -1,5 +1,4 @@
-import re
-from typing import Generator, List
+from typing import List
 
 from preprocessor import Preprocessor
 

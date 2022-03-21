@@ -1,11 +1,8 @@
 #!/usr/bin/python3
-import re
-import nltk
-import sys
 import getopt
-
-import os
 import json
+import os
+import sys
 
 from preprocessor import Preprocessor
 from memory_indexing import MemoryIndexing
