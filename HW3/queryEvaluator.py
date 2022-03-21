@@ -156,7 +156,6 @@ class QueryEvaluator:
                 scores[doc_index][1] += score_contribution
                 # Continue to next term
                 if score_contribution < score_contribution_cutoff:
-                    print("Pruning {}".format(N - doc_index))
                     break
 
         # Get top 10
