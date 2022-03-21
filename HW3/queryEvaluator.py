@@ -1,8 +1,17 @@
 import heapq
 from math import log10
+import os
 from typing import List, Tuple
+import yaml
 
 from utils import normalize
+
+# Obtain hyperparameters
+ROOT_DIRECTORY = os.path.dirname(os.path.abspath(__file__))
+with open(os.path.join(ROOT_DIRECTORY, "config.yaml"), "r") as config:
+    hyperparameters = yaml.full_load(config)
+idf_cutoff = hyperparameters['heuristic1']['idf_cutoff']
+score_contribution_cutoff = hyperparameters['heuristic3']['score_contribution_cutoff']
 
 class QueryEvaluator:
     '''
@@ -113,14 +122,17 @@ class QueryEvaluator:
         index = 0
         term_to_index = {}
         for term in parsed_query:
+            # The term doesn't exist in dictionary
             if not self._exist(term):
                 continue
-            # Existing term
             if term in term_to_index:
                 tf_list[term_to_index[term]] += 1
                 continue
             doc_freq = self._get_doc_frequency(term)
             idf = log10(N / doc_freq)
+            # Ignore low idf term
+            if idf < idf_cutoff:
+                continue
             tf_list.append(1)
             idf_list.append(idf)
             term_to_index[term] = index
@@ -140,7 +152,12 @@ class QueryEvaluator:
             posting_list = self._get_posting_list(term)
             for doc, w_td in posting_list:
                 doc_index = doc_to_index[doc]
-                scores[doc_index][1] += w_td * w_tq[term_index]
+                score_contribution = w_td * w_tq[term_index]
+                scores[doc_index][1] += score_contribution
+                # Continue to next term
+                if score_contribution < score_contribution_cutoff:
+                    print("Pruning {}".format(N - doc_index))
+                    break
 
         # Get top 10
         top_10 = heapq.nlargest(10, scores, key = lambda x : x[1])
