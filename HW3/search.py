@@ -1,8 +1,11 @@
 #!/usr/bin/python3
-import re
-import nltk
-import sys
 import getopt
+import json
+import os
+import sys
+
+from queryParser import QueryParser
+from queryEvaluator import QueryEvaluator
 
 def usage():
     print("usage: " + sys.argv[0] + " -d dictionary-file -p postings-file -q file-of-queries -o output-file-of-results")
@@ -15,6 +18,33 @@ def run_search(dict_file, postings_file, queries_file, results_file):
     print('running search on the queries...')
     # This is an empty method
     # Pls implement your code in below
+
+    # Paths
+    ROOT_DIRECTORY = os.path.dirname(os.path.abspath(__file__))
+    path_to_dict = os.path.join(ROOT_DIRECTORY, dict_file)
+    path_to_postings = os.path.join(ROOT_DIRECTORY, postings_file)
+    path_to_queries = os.path.join(ROOT_DIRECTORY, queries_file)
+    path_to_results = os.path.join(ROOT_DIRECTORY, results_file)
+
+    # Initialize Query related classes
+    with open(path_to_dict, 'r') as f:
+        trie = json.load(f)
+    queryParser = QueryParser()
+    queryEvaluator = QueryEvaluator(path_to_postings, trie)
+
+    # Process queries
+    queries = queryParser.parse_queries(path_to_queries)
+    results = []
+    for parsed_query in queries:
+        results.append(queryEvaluator.evaluate(parsed_query))
+
+    # Save result
+    with open(path_to_results, 'w') as f:
+        for result in results:
+            if result == []:
+                f.write("\n")
+            else:
+                f.write(" ".join(map(str, result)) + "\n")
 
 dictionary_file = postings_file = file_of_queries = output_file_of_results = None
 
