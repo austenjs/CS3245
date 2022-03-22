@@ -162,9 +162,13 @@ class QueryEvaluator:
         top_10 = heapq.nlargest(10, scores, key = lambda x : x[1])
         results = []
 
+        # Sort by score, then by doc id
+        results = sorted(results, key = lambda x : (x[1], x[0]))
+
         # Give docs that have values > 0
         for pair in top_10:
             if pair[1] == 0:
                 continue
             results.append(pair[0])
+
         return results
