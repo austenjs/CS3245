@@ -1,4 +1,4 @@
 heuristic1:
-  idf_cutoff : 0
+  idf_cutoff : 0.19
 heuristic3:
-  score_contribution_cutoff : 0
+  score_contribution_cutoff : 0.003
