@@ -1,5 +1,5 @@
-from typing import List,Tuple, Dict
-from math import sqrt,log10
+from typing import List, Tuple, Dict
+from math import sqrt, log10
 
 class MemoryIndexing:
   '''
@@ -123,3 +123,4 @@ class MemoryIndexing:
     posting_dict_result["_LENGTH_"] = [(doc_id,length) for doc_id,length in document_length.items()]
 
     return posting_dict_result
+  

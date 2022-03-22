@@ -4,8 +4,8 @@ import json
 import os
 import sys
 
-from queryParser import QueryParser
 from queryEvaluator import QueryEvaluator
+from queryParser import QueryParser
 
 def usage():
     print("usage: " + sys.argv[0] + " -d dictionary-file -p postings-file -q file-of-queries -o output-file-of-results")
