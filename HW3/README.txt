@@ -75,7 +75,8 @@ hyperparameters to be 0.
 8. dictionary.txt
 9. postings.txt
 10. config.yaml
-11. README.txt
+11. requirements.txt
+12. README.txt
 
 == Statement of individual work ==
 
