@@ -2,6 +2,7 @@
 import getopt
 import json
 import os
+import platform
 import sys
 
 from preprocessor import Preprocessor
@@ -53,6 +54,8 @@ def build_index(in_dir, out_dict, out_postings):
     line_offset = dict()
     offset = 0
 
+    windows_platform = platform.system() == 'Windows'
+
     with open(os.path.join(ROOT_DIRECTORY, out_postings), 'r') as posting_file:
         line = posting_file.readline()
         while line != '' and line != '\n':
@@ -60,7 +63,7 @@ def build_index(in_dir, out_dict, out_postings):
             terms.append(term)
             line_offset[term] = offset
             frequencies[term] = (len(line.split('|')) - 1)
-            offset += len(line) + 1
+            offset += len(line) + 1 if windows_platform else len(line) # due to the discrepancies between Windows and Linux platforms when reading '\n'
             line = posting_file.readline() 
 
     term_dictionary = mi.create_dictionary_trie(terms,frequencies)

@@ -2,7 +2,6 @@ from typing import List
 
 from nltk.stem.porter import PorterStemmer
 from nltk.tokenize import sent_tokenize, word_tokenize
-from unidecode import unidecode
 
 class Preprocessor:
     '''
@@ -27,7 +26,7 @@ class Preprocessor:
         Return:
             A lower-case word after being stemmed
         '''
-        return self.stemmer.stem(unidecode(word))
+        return self.stemmer.stem(word)
 
     def preprocess_file(self, file_path) -> List[str]:
         '''
@@ -48,7 +47,7 @@ class Preprocessor:
         raw_words = []
         for sentence in sentences:
             for word in word_tokenize(sentence):
-                raw_words.append(unidecode(word))
+                raw_words.append(word)
 
         # Lower case, stemming, and remove non-alphanumeric words
         processed_words = [self.stemmer.stem(word) for word in raw_words]
