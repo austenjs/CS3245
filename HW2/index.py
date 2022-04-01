@@ -3,6 +3,7 @@ import getopt
 import json
 import os
 import shutil
+import platform
 import sys
 
 from bsbi import BSBI
@@ -103,6 +104,9 @@ def build_index(in_dir, out_dict, out_postings):
     # Delete BSBI chunk
     os.remove(os.path.join(temp_folder, filenames_in_disks[0]))
     
+    #### CHANGES
+    windows_platform = platform.system() == 'Windows'
+
     # read the postings file again to help with the seek() function when searching
     line_offset = []
     frequencies = []
@@ -112,7 +116,7 @@ def build_index(in_dir, out_dict, out_postings):
         while line != '' and line != '\n':
             line_offset.append(offset)
             frequencies.append(len(line.split('|')) - 1)
-            offset += len(line) + 1
+            offset += len(line) + 1 if windows_platform else len(line) #### CHANGES
             line = posting_file.readline()
 
     # create the dictionary of terms using the trie data structure

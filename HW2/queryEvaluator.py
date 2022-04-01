@@ -1,5 +1,4 @@
 from math import sqrt
-from turtle import pos
 
 from typing import List
 
