@@ -43,7 +43,7 @@ class QueryEvaluator:
             if letter not in current:
                 return False
             current = current[letter]
-        return ('_end_' in current)
+        return ('_end_' in current) ### CHANGES
     
     def _get_doc_frequency(self, term) -> int:
         '''
